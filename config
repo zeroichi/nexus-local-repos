@@ -1,0 +1,66 @@
+# 証明書ファイルを格納するディレクトリ
+CERTS_DIR=/etc/pki/tls/private
+
+# ルート認証局の秘密鍵ファイル
+CA_PRIV_KEY=ca.key
+
+# ルート認証局の署名要求ファイル
+CA_CSR=ca.csr
+
+# ルート認証局の証明書ファイル
+CA_CERT=ca.crt
+
+# Subject のベース(CNより前の部分)
+SUBJ_BASE="/C=JP/ST=Kanagawa/O=My company"
+
+# ルート認証局のCommon Name
+CA_CN=rootca
+
+# 証明書の有効期間 (単位:日)
+#   ルート認証局、サーバ証明書双方に適用されます
+DAYS=3650
+
+# サーバ証明書のCommon Name
+#   他のクライアントマシンからアクセスする際の DNS 名を指定してください
+#   $CERTS_DIR の下にこの名前でディレクトリが作成されます
+#   証明書の Subject は $SUBJ_BASE + $SRV_CN になります
+SRV_CN=nexus3.local
+
+# サーバのIPアドレス
+#   以下ではこのスクリプトを実行したマシンのIPを取得していますが
+#   そうでない場合は修正してください
+SRV_IP=$(hostname -i | awk '{print $1}')
+
+# サーバ証明書の秘密鍵ファイル
+SRV_PRIV_KEY=server.key
+
+# サーバ証明書の署名要求ファイル
+SRV_CSR=server.csr
+
+# サーバ証明書の証明書ファイル
+SRV_CERT=server.crt
+
+# サーバ証明書に付加する拡張情報で Subject Alternative Name に指定する値
+SRV_SAN="DNS:$SRV_CN, IP:$SRV_IP"
+
+# サーバ証明書+認証局証明書の証明書チェーンファイル
+SRV_FULL_CERT=fullchain.crt
+
+# Nexus コンテナ名
+NEXUS_CONT_NAME=nexus
+
+# Nexus データ格納ディレクトリ (十分な空き容量を確保すること)
+NEXUS_DIR=/var/opt/nexus
+
+# Nexus コンテナ公開ポート設定 (Nexus 起動時に docker run にそのまま渡されます)
+NEXUS_PORTS='-p 8081:8081 -p 10000-10005:10000-10005'
+
+# Nexus 起動チェックの再試行回数
+NEXUS_CHK_RETRY=20
+
+# Nexus 起動チェックの間隔 (単位:秒)
+NEXUS_CHK_INTERVAL=5
+
+# Docker Hub のユーザ名
+#   Docker Hub のPull Request制限を緩和するため、アカウントを利用してのアクセスを推奨
+DOCKERHUB_USER=
