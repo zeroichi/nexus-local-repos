@@ -81,7 +81,7 @@ fi
 # Realms 設定
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/realm.conf \
+  -d@${SCRIPT_DIR}/templates/nexus/realm.conf \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/realms/active
 
@@ -90,32 +90,32 @@ if [ -n "$DOCKERHUB_USER" ]; then
   # パスワード入りのjsonをファイルシステムに保存しないようにするため、sed で生成した json を直接curlに流しこむ
   curl -f -u "admin:$ADMIN_PASS" \
     -H "Content-Type: application/json" \
-    "-d@"<(sed -e "s/%DOCKERHUB_USER%/$DOCKERHUB_USER/g" -e "s/%DOCKERHUB_PASS%/$DOCKERHUB_PASS/g" $SCRIPT_DIR/templates/dockerhub-proxy.conf) \
+    "-d@"<(sed -e "s/%DOCKERHUB_USER%/$DOCKERHUB_USER/g" -e "s/%DOCKERHUB_PASS%/$DOCKERHUB_PASS/g" $SCRIPT_DIR/templates/nexus/dockerhub-proxy.conf) \
     http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
 else
   # 認証部分を削除して流しこむ
   curl -f -u "admin:$ADMIN_PASS" \
     -H "Content-Type: application/json" \
-    "-d@"<(jq "del(.httpClient.authentication)" < $SCRIPT_DIR/templates/dockerhub-proxy.conf) \
+    "-d@"<(jq "del(.httpClient.authentication)" < $SCRIPT_DIR/templates/nexus/dockerhub-proxy.conf) \
     http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
 fi
 
 # ONAP proxy リポジトリ追加
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/onap-proxy.conf \
+  -d@${SCRIPT_DIR}/templates/nexus/onap-proxy.conf \
   http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
 
 # アクセス用 一般ユーザ追加
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/user.conf \
+  -d@${SCRIPT_DIR}/templates/nexus/user.conf \
   http://${SRV_CN}:8081/service/rest/v1/security/users
 
 # Nexus への匿名アクセス設定
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/anonymous.conf \
+  -d@${SCRIPT_DIR}/templates/nexus/anonymous.conf \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/anonymous
 
