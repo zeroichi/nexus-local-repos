@@ -87,6 +87,14 @@ curl -f -u "admin:$ADMIN_PASS" \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/realms/active
 
+# Nexus への匿名アクセス設定
+echo "[INFO] 匿名アクセス設定中 ..."
+curl -f -u "admin:$ADMIN_PASS" \
+  -H "Content-Type: application/json" \
+  -d@${SCRIPT_DIR}/templates/nexus/anonymous.conf \
+  -X PUT \
+  http://${SRV_CN}:8081/service/rest/v1/security/anonymous
+
 # Docker Hub proxy リポジトリ追加
 echo "[INFO] Docker Hub ミラーを設定中 ..."
 if [ -n "$DOCKERHUB_USER" ]; then
@@ -132,14 +140,6 @@ curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/nexus/user.conf \
   http://${SRV_CN}:8081/service/rest/v1/security/users
-
-# Nexus への匿名アクセス設定
-echo "[INFO] 匿名アクセス設定中 ..."
-curl -f -u "admin:$ADMIN_PASS" \
-  -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/nexus/anonymous.conf \
-  -X PUT \
-  http://${SRV_CN}:8081/service/rest/v1/security/anonymous
 
 echo
 echo "Nexus Repository Manager の設定が完了しました。"
