@@ -61,6 +61,10 @@ NEXUS_CHK_RETRY=20
 # Nexus 起動チェックの間隔 (単位:秒)
 NEXUS_CHK_INTERVAL=5
 
+# ローカルイメージ push 用、ONAP レジストリミラー の追加リポジトリ設定を行う
+#   有効にする場合は Y をセットしてください
+NEXUS_EXTRA_REPOS=Y
+
 # Docker Hub のユーザ名
 #   Docker Hub のPull Request制限を緩和するため、アカウントを利用してのアクセスを推奨
 #   空に設定している場合は匿名アクセスになります。

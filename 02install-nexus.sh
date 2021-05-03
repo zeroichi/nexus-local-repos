@@ -73,12 +73,14 @@ ADMIN_PASS=$(cat $NEXUS_DIR/admin.password)
 if [ -n "$DOCKERHUB_USER" ]; then
 # DOCKERHUB_USER が設定されている場合はパスワードを聞く
     echo "[INFO] Docker Hub から Pull する際のアカウントを設定します"
+# TODO: パスワードに / が含まれると sed がエラーになってしまう
     read -p "Password for Docker Hub user $DOCKERHUB_USER : " -s DOCKERHUB_PASS
     echo
 fi
 
 ### Nexus 初期設定
 # Realms 設定
+echo "[INFO] Realm 設定中 ..."
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/nexus/realm.conf \
@@ -86,6 +88,7 @@ curl -f -u "admin:$ADMIN_PASS" \
   http://${SRV_CN}:8081/service/rest/v1/security/realms/active
 
 # Docker Hub proxy リポジトリ追加
+echo "[INFO] Docker Hub ミラーを設定中 ..."
 if [ -n "$DOCKERHUB_USER" ]; then
   # パスワード入りのjsonをファイルシステムに保存しないようにするため、sed で生成した json を直接curlに流しこむ
   curl -f -u "admin:$ADMIN_PASS" \
@@ -100,26 +103,45 @@ else
     http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
 fi
 
-# ONAP proxy リポジトリ追加
-curl -f -u "admin:$ADMIN_PASS" \
-  -H "Content-Type: application/json" \
-  -d@${SCRIPT_DIR}/templates/nexus/onap-proxy.conf \
-  http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
+if [ "$NEXUS_EXTRA_REPOS" = Y ]; then
+  # ONAP proxy リポジトリ追加
+  echo "[INFO] (追加リポジトリ) ONAP ミラーを設定中 ..."
+  curl -f -u "admin:$ADMIN_PASS" \
+    -H "Content-Type: application/json" \
+    -d@${SCRIPT_DIR}/templates/nexus/onap-proxy.conf \
+    http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
+
+  # イメージ push 用リポジトリ追加
+  echo "[INFO] (追加リポジトリ) イメージ push 用リポジトリを設定中 ..."
+  curl -f -u "admin:$ADMIN_PASS" \
+    -H "Content-Type: application/json" \
+    -d@${SCRIPT_DIR}/templates/nexus/docker-hosted.conf \
+    http://${SRV_CN}:8081/service/rest/v1/repositories/docker/hosted
+
+  # docker repository group 追加
+  echo "[INFO] (追加リポジトリ) リポジトリグループを設定中 ..."
+  curl -f -u "admin:$ADMIN_PASS" \
+    -H "Content-Type: application/json" \
+    -d@${SCRIPT_DIR}/templates/nexus/docker-group.conf \
+    http://${SRV_CN}:8081/service/rest/v1/repositories/docker/group
+fi
 
 # アクセス用 一般ユーザ追加
+echo "[INFO] アクセス用ユーザを追加中 ..."
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/nexus/user.conf \
   http://${SRV_CN}:8081/service/rest/v1/security/users
 
 # Nexus への匿名アクセス設定
+echo "[INFO] 匿名アクセス設定中 ..."
 curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/nexus/anonymous.conf \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/anonymous
 
-
+echo
 echo "Nexus Repository Manager の設定が完了しました。"
 echo "ブラウザで http://${SRV_CN}:8081/ にアクセスし、"
 echo "admin / $ADMIN_PASS でログインして管理者パスワードを変更してください。"
