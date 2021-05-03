@@ -63,4 +63,6 @@ NEXUS_CHK_INTERVAL=5
 
 # Docker Hub のユーザ名
 #   Docker Hub のPull Request制限を緩和するため、アカウントを利用してのアクセスを推奨
+#   空に設定している場合は匿名アクセスになります。
+#   ユーザ名をセットした場合はスクリプト実行中にパスワードを聞かれます。
 DOCKERHUB_USER=

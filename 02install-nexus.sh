@@ -7,9 +7,15 @@ source $SCRIPT_DIR/config
 #set -x
 
 if ! hash docker 2>/dev/null; then
+    echo "[INFO] Docker (Community Edition) のインストールを開始します"
     cd /tmp
     curl -fsSL get.docker.com -o get-docker.sh
     sh get-docker.sh
+fi
+
+if ! hash jq 2>/dev/null; then
+    echo "[INFO] jq コマンドをインストールしています"
+    sudo apt-get install -y jq
 fi
 
 # 既に nexus のコンテナが稼動しているかチェックする。
@@ -63,32 +69,57 @@ done
 echo
 
 ADMIN_PASS=$(cat $NEXUS_DIR/admin.password)
-echo $ADMIN_PASS
 
 if [ -n "$DOCKERHUB_USER" ]; then
+# DOCKERHUB_USER が設定されている場合はパスワードを聞く
+    echo "[INFO] Docker Hub から Pull する際のアカウントを設定します"
     read -p "Password for Docker Hub user $DOCKERHUB_USER : " -s DOCKERHUB_PASS
     echo
 fi
-# パスワード入りのjsonをファイルシステムに保存しないようにするため、sed で生成した json を直接curlに流しこむ
-curl -u "admin:$ADMIN_PASS" \
+
+### Nexus 初期設定
+# Realms 設定
+curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/realm.conf \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/realms/active
-curl -u "admin:$ADMIN_PASS" \
-  -H "Content-Type: application/json" \
-  "-d@"<(sed -e "s/%DOCKERHUB_USER%/$DOCKERHUB_USER/g" -e "s/%DOCKERHUB_PASS%/$DOCKERHUB_PASS/g" $SCRIPT_DIR/templates/dockerhub-proxy.conf) \
-  http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
-curl -u "admin:$ADMIN_PASS" \
+
+# Docker Hub proxy リポジトリ追加
+if [ -n "$DOCKERHUB_USER" ]; then
+  # パスワード入りのjsonをファイルシステムに保存しないようにするため、sed で生成した json を直接curlに流しこむ
+  curl -f -u "admin:$ADMIN_PASS" \
+    -H "Content-Type: application/json" \
+    "-d@"<(sed -e "s/%DOCKERHUB_USER%/$DOCKERHUB_USER/g" -e "s/%DOCKERHUB_PASS%/$DOCKERHUB_PASS/g" $SCRIPT_DIR/templates/dockerhub-proxy.conf) \
+    http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
+else
+  # 認証部分を削除して流しこむ
+  curl -f -u "admin:$ADMIN_PASS" \
+    -H "Content-Type: application/json" \
+    "-d@"<(jq "del(.httpClient.authentication)" < $SCRIPT_DIR/templates/dockerhub-proxy.conf) \
+    http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
+fi
+
+# ONAP proxy リポジトリ追加
+curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/onap-proxy.conf \
   http://${SRV_CN}:8081/service/rest/v1/repositories/docker/proxy
-curl -u "admin:$ADMIN_PASS" \
+
+# アクセス用 一般ユーザ追加
+curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/user.conf \
   http://${SRV_CN}:8081/service/rest/v1/security/users
-curl -u "admin:$ADMIN_PASS" \
+
+# Nexus への匿名アクセス設定
+curl -f -u "admin:$ADMIN_PASS" \
   -H "Content-Type: application/json" \
   -d@${SCRIPT_DIR}/templates/anonymous.conf \
   -X PUT \
   http://${SRV_CN}:8081/service/rest/v1/security/anonymous
+
+
+echo "Nexus Repository Manager の設定が完了しました。"
+echo "ブラウザで http://${SRV_CN}:8081/ にアクセスし、"
+echo "admin / $ADMIN_PASS でログインして管理者パスワードを変更してください。"
