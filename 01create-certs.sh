@@ -10,7 +10,8 @@ set -x
 sudo mkdir -p $CERTS_DIR && cd $CERTS_DIR
 if [ ! -e $CA_CERT ]; then
   openssl genrsa 2048 | sudo tee $CA_PRIV_KEY
-  openssl req -new -key $CA_PRIV_KEY -subj "${SUBJ_BASE}/CN=${CA_CN}" | sudo tee $CA_CSR
+  sudo chmod 400 $CA_PRIV_KEY
+  sudo openssl req -new -key $CA_PRIV_KEY -subj "${SUBJ_BASE}/CN=${CA_CN}" | sudo tee $CA_CSR
   sudo openssl x509 -req -in $CA_CSR -signkey $CA_PRIV_KEY -CAcreateserial  -out $CA_CERT -days $DAYS
   openssl x509 -noout -text -in $CA_CERT
 fi
@@ -19,6 +20,7 @@ fi
 sudo mkdir -p "$SRV_CN" && cd "$SRV_CN"
 if [ ! -e $SRV_CERT ]; then
   openssl genrsa 2048 | sudo tee $SRV_PRIV_KEY
+  sudo chmod 400 $SRV_PRIV_KEY
   sudo openssl req -new -key $SRV_PRIV_KEY -out $SRV_CSR -subj "${SUBJ_BASE}/CN=$SRV_CN"
   echo "subjectAltName = $SRV_SAN" | sudo tee ext.txt
   sudo openssl x509 -req -in $SRV_CSR -CA ../$CA_CERT -CAkey ../$CA_PRIV_KEY -CAcreateserial -days $DAYS -out $SRV_CERT -extfile ext.txt
