@@ -66,3 +66,6 @@ NEXUS_CHK_INTERVAL=5
 #   空に設定している場合は匿名アクセスになります。
 #   ユーザ名をセットした場合はスクリプト実行中にパスワードを聞かれます。
 DOCKERHUB_USER=
+
+# Docker からミラーレジストリへアクセスするためのポート番号 (HTTPS)
+DOCKER_ACCESS_PORT=11000
