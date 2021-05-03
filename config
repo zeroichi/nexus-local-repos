@@ -20,6 +20,8 @@ CA_CN=rootca
 #   ルート認証局、サーバ証明書双方に適用されます
 DAYS=3650
 
+# これ以降の「サーバ」とは Nexus Repository Manager のサーバを指します。
+
 # サーバ証明書のCommon Name
 #   他のクライアントマシンからアクセスする際の DNS 名を指定してください
 #   $CERTS_DIR の下にこの名前でディレクトリが作成されます
@@ -27,9 +29,13 @@ DAYS=3650
 SRV_CN=nexus3.local
 
 # サーバのIPアドレス
-#   以下ではこのスクリプトを実行したマシンのIPを取得していますが
-#   そうでない場合は修正してください
-SRV_IP=$(hostname -i | awk '{print $1}')
+#   クライアントマシンから見た Nexus サーバのアドレス。
+#   以下では 1.1.1.1 へのルーティングで通るインタフェース
+#   (デフォルトゲートウェイにつながるインタフェース)の IP を自動取得していますが、
+#   そうでない場合は修正してください。
+#   なお、このIPは /etc/hosts への設定追加時にも使用されます。
+SRV_IP=$(ip r get 1.1.1.1 | grep src | awk '{print $7}')
+[ -z "$SRV_IP" ] && SRV_IP=$(hostname -i | awk '{print $1}')
 
 # サーバ証明書の秘密鍵ファイル
 SRV_PRIV_KEY=server.key
@@ -66,10 +72,10 @@ NEXUS_CHK_INTERVAL=5
 NEXUS_EXTRA_REPOS=Y
 
 # Docker Hub のユーザ名
-#   Docker Hub のPull Request制限を緩和するため、アカウントを利用してのアクセスを推奨
+#   Docker Hub のPull Request制限を緩和するため、アカウントを利用してのアクセスを推奨。
 #   空に設定している場合は匿名アクセスになります。
-#   ユーザ名をセットした場合はスクリプト実行中にパスワードを聞かれます。
+#   ユーザ名をセットした場合は02スクリプト実行中にパスワードを聞かれます。
 DOCKERHUB_USER=
 
-# Docker からミラーレジストリへアクセスするためのポート番号 (HTTPS)
+# クライアントマシンからミラーレジストリへアクセスするためのポート番号 (HTTPS)
 DOCKER_ACCESS_PORT=11000
