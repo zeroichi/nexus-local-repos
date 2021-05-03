@@ -32,7 +32,7 @@ fi
 
 # ルート認証局証明書のシステムへのインストール
 cd $CERTS_DIR
-sudo install $CA_CERT /usr/local/share/ca-certificates/$CA_CN.crt
+sudo install -m 644 $CA_CERT /usr/local/share/ca-certificates/$CA_CN.crt
 sudo update-ca-certificates
 
 # /etc/hosts に追加
