@@ -4,6 +4,12 @@
 SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
 source $SCRIPT_DIR/config
 
+if [ ! -r $CERTS_DIR/$CA_CERT ]; then
+    echo "[ERROR] ルート認証局 証明書ファイル $CERTS_DIR/$CA_CERT が見つからないか、読み込めません。"
+    echo "01create-certs.sh を実行して証明書を生成してください。"
+    exit 1
+fi
+
 echo "==================== Linux 向けセットアップガイド ===================="
 echo
 echo "端末を開いて bash シェルでログインし、次のスクリプトをペーストして実行してください。"

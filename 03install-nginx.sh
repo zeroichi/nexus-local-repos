@@ -6,6 +6,16 @@ source $SCRIPT_DIR/config
 
 #set -x
 
+# 証明書ファイルの存在をチェック
+if [ ! -e $CERTS_DIR/$SRV_CN/$SRV_FULL_CERT -o ! -e $CERTS_DIR/$SRV_CN/$SRV_PRIV_KEY ]; then
+    echo "[ERROR] 下記いずれかのサーバ用TLS証明書/秘密鍵ファイルが見つかりません。"
+    echo "- $CERTS_DIR/$SRV_CN/$SRV_FULL_CERT"
+    echo "- $CERTS_DIR/$SRV_CN/$SRV_PRIV_KEY"
+    echo "01create-certs.sh を実行して生成するか、別途用意してある場合は上記パスに配置してください。"
+    echo "(パスを変更する場合は config ファイルを編集してください)"
+    exit 1
+fi
+
 echo "[INFO] nginx をインストール中..."
 sudo apt-get install -y nginx
 
